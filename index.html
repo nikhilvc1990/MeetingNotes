@@ -21,6 +21,43 @@
     text-align: center;
     margin-bottom: 28px;
   }
+  .api-bar {
+    background: #1a5c5c;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .api-bar label {
+    color: #a8d8d8;
+    font-size: 0.78rem;
+    margin: 0;
+    white-space: nowrap;
+  }
+  .api-bar input {
+    flex: 1;
+    min-width: 200px;
+    background: #0e3a3a;
+    border: 1.5px solid #2a7070;
+    border-radius: 8px;
+    color: #e0f4f4;
+    padding: 7px 12px;
+    font-size: 0.88rem;
+    font-family: monospace;
+  }
+  .api-bar input:focus { outline: none; border-color: #4ab8b8; }
+  .api-bar input::placeholder { color: #4a8080; }
+  .api-bar a {
+    color: #7dd8d8;
+    font-size: 0.78rem;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .api-bar a:hover { text-decoration: underline; }
+
   header h1 {
     font-size: 1.75rem;
     font-weight: 700;
@@ -275,6 +312,13 @@
     <p>Paste your raw meeting notes. Get a clean, structured summary in seconds.</p>
   </header>
 
+  <!-- API Key bar -->
+  <div class="api-bar">
+    <label for="api-key">🔑 Anthropic API Key</label>
+    <input type="password" id="api-key" placeholder="sk-ant-api03-..." />
+    <a href="https://console.anthropic.com" target="_blank">Get a key ↗</a>
+  </div>
+
   <!-- Input card -->
   <div class="card">
     <label for="notes-input">Paste your meeting notes</label>
@@ -318,6 +362,15 @@ async function organizeNotes() {
   const resultsDiv = document.getElementById('results');
   const body = document.getElementById('results-body');
 
+  const apiKey = document.getElementById('api-key').value.trim();
+
+  if (!apiKey) {
+    resultsDiv.style.display = 'block';
+    body.innerHTML = `<div class="hint">🔑 <strong>API key needed!</strong><br>Paste your Anthropic API key in the bar above. <a href="https://console.anthropic.com" target="_blank" style="color:#1a8080">Get one here ↗</a></div>`;
+    document.getElementById('copy-btn').style.display = 'none';
+    return;
+  }
+
   if (!notes) {
     resultsDiv.style.display = 'block';
     body.innerHTML = `<div class="hint">✏️ <strong>Nothing to detangle yet!</strong><br>Paste some meeting notes above and click the button.</div>`;
@@ -351,7 +404,12 @@ ${notes}
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-calls": "true"
+      },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 1000,
